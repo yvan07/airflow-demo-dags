@@ -1,7 +1,7 @@
 from airflow.decorators import dag, task
 from airflow.operators.bash import BashOperator
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 @dag(start_date=datetime(2024, 2, 2), schedule_interval='@daily', catchup=False)
 def test_day_dag():
