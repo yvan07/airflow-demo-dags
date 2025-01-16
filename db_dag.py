@@ -48,7 +48,7 @@ except Exception as e:
     raise e
 """
         ],
-        is_delete_operator_pod=False,  # Supprimer le Pod après exécution
+        is_delete_operator_pod=True,  # Supprimer le Pod après exécution
         in_cluster=True,  # Airflow est exécuté dans le cluster Kubernetes
     )
 
