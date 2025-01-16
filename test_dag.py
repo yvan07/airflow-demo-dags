@@ -1,46 +1,52 @@
-from airflow.decorators import dag, task
-from airflow.operators.bash import BashOperator
-
+from airflow import DAG
+from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
 from datetime import datetime, timedelta
 
-@dag(start_date=datetime(2024, 2, 2), schedule_interval='@daily', catchup=False)
-def test_day_dag():
+# Définit les paramètres du DAG
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
 
-    # Define tasks
-    task_1 = BashOperator(task_id='brush_teeth', bash_command='echo "Brushed teeth"', retries=3, retry_delay=timedelta(minutes=5))
-    task_2 = BashOperator(task_id='eat_breakfast', bash_command='echo "Ate a healthy breakfast"', retries=3, retry_delay=timedelta(minutes=5))
-    task_3 = BashOperator(task_id='exercise', bash_command='echo "Completed morning exercise"', retries=3, retry_delay=timedelta(minutes=5))
+# Déclare le DAG
+with DAG(
+    'example_kubernetes_operator',
+    default_args=default_args,
+    description='Example DAG using KubernetesPodOperator',
+    schedule_interval=timedelta(days=1),
+    start_date=datetime(2025, 1, 1),
+    catchup=False,
+    tags=['example', 'kubernetes'],
+) as dag:
 
-    # Define Python tasks using @task decorator
-    @task
-    def read_news():
-        return 'Read the latest news headlines'
+    # Tâche 1: Exécuter un Pod Kubernetes
+    task1 = KubernetesPodOperator(
+        namespace='default',  # Namespace Kubernetes où le Pod sera lancé
+        name='hello-world-pod',  # Nom du Pod
+        task_id='hello_world',  # ID unique de la tâche Airflow
+        image='alpine:3.16',  # Image Docker utilisée par le Pod
+        cmds=['echo', 'Hello, Kubernetes!'],  # Commandes exécutées dans le Pod
+        is_delete_operator_pod=True,  # Supprimer le Pod après exécution
+        in_cluster=True,  # Airflow tourne dans le même cluster Kubernetes
+    )
 
-    @task
-    def work_tasks():
-        return 'Completed important work tasks'
+    # Tâche 2: Calculer un résultat avec Python dans un Pod
+    task2 = KubernetesPodOperator(
+        namespace='default',
+        name='python-calculate-pod',
+        task_id='python_calculate',
+        image='python:3.9',  # Image Python officielle
+        cmds=['python', '-c'],
+        arguments=[
+            'print("The result of 42 * 2 is:", 42 * 2)'
+        ],
+        is_delete_operator_pod=True,
+        in_cluster=True,
+    )
 
-    @task
-    def relax():
-        return 'Relaxed and took a break'
-
-    # Define the final tasks
-    @task
-    def review_day(news, work, relaxation):
-        print(f"News: {news}")
-        print(f"Work: {work}")
-        print(f"Relaxation: {relaxation}")
-
-    # Set task dependencies
-    task_1 >> task_2 >> task_3
-    task_2 >> task_3
-
-    # Set Python task dependencies
-    news_result = read_news()
-    work_result = work_tasks()
-    relax_result = relax()
-
-    # Set final task dependency
-    review_day(news_result, work_result, relax_result)
-
-test_day_dag()
+    # Définir l'ordre d'exécution
+    task1 >> task2
