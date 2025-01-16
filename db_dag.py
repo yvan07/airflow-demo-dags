@@ -25,13 +25,15 @@ with DAG(
 
     # KubernetesPodOperator pour tenter de se connecter à une DB inexistante
     connect_to_db = KubernetesPodOperator(
-        namespace='airflow',  # Namespace où le Pod sera lancé
+        namespace='default',  # Namespace où le Pod sera lancé
         name='connect-to-fake-db',  # Nom du Pod
         task_id='connect_to_fake_db',  # ID unique pour la tâche
         image='python:3.9',  # Image Docker contenant Python
-        cmds=['python', '-c'],  # Commande exécutée dans le conteneur
+        cmds=['bash', '-c'],  # Utiliser Bash pour exécuter plusieurs commandes
         arguments=[
             """
+            pip install psycopg2-binary &&
+            python -c "
 import psycopg2
 try:
     # Tenter de se connecter à une base de données fictive
@@ -46,7 +48,8 @@ except Exception as e:
     print('Failed to connect to the database:')
     print(e)
     raise e
-"""
+"
+            """
         ],
         is_delete_operator_pod=True,  # Supprimer le Pod après exécution
         in_cluster=True,  # Airflow est exécuté dans le cluster Kubernetes
