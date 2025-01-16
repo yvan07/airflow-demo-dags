@@ -25,7 +25,7 @@ with DAG(
 
     # KubernetesPodOperator pour tenter de se connecter à une DB inexistante
     connect_to_db = KubernetesPodOperator(
-        namespace='default',  # Namespace où le Pod sera lancé
+        namespace='airflow',  # Namespace où le Pod sera lancé
         name='connect-to-fake-db',  # Nom du Pod
         task_id='connect_to_fake_db',  # ID unique pour la tâche
         image='python:3.9',  # Image Docker contenant Python
