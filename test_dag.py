@@ -25,12 +25,12 @@ with DAG(
 
     # Tâche 1: Exécuter un Pod Kubernetes
     task1 = KubernetesPodOperator(
-        namespace='default',  # Namespace Kubernetes où le Pod sera lancé
+        namespace='airflow',  # Namespace Kubernetes où le Pod sera lancé
         name='hello-world-pod',  # Nom du Pod
         task_id='hello_world',  # ID unique de la tâche Airflow
         image='alpine:3.16',  # Image Docker utilisée par le Pod
         cmds=['echo', 'Hello, Kubernetes!'],  # Commandes exécutées dans le Pod
-        is_delete_operator_pod=True,  # Supprimer le Pod après exécution
+        is_delete_operator_pod=False,  # Supprimer le Pod après exécution
         in_cluster=True,  # Airflow tourne dans le même cluster Kubernetes
     )
 
